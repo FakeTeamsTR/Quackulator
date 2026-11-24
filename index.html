@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Quackulator</title>
+	<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		*, *::before, *::after {
+			box-sizing: inherit;
+			margin: 0;
+			padding: 0;
+		}
+		body {
+			display: flex;
+			background: linear-gradient(320deg, #f6ff7e, #ffbf84, #f6ff7e);
+			align-items: center;
+			justify-content: center;
+			font-family: Helvetica, Arial, sans-serif;
+		}
+		.wrapper {
+			backdrop-filter: blur(4px);
+			-webkit-backdrop-filter: blur(4px);
+			background: rgba(255, 255, 255, 0.30);
+			border: 0.1rem solid rgba(255, 255, 255, 0.34);
+			border-radius: 16px;
+			box-shadow: 0 4px 30px rgba(35, 35, 35, 0.1);
+			color: #232323;
+			width: 30rem;
+			min-height: 40rem;
+			padding: 2rem;
+		}
+		.screen {
+			backdrop-filter: blur(5.5px);
+			-webkit-backdrop-filter: blur(5.5px);
+			background: rgba(255, 255, 255, 0.75);
+			border: 0.1rem solid rgba(255, 255, 255, 0.01);
+			border-radius: 16px;
+			box-shadow: 0 4px 30px rgba(35, 35, 35, 0.1);
+			color: #232323;
+			font-size: 2.5rem;
+			overflow: auto;
+			padding: 2rem;
+			text-align: right;
+			min-height: 6rem;
+			margin-bottom: 1rem;
+		}
+		.calc-button-row {
+			display: flex;
+			justify-content: space-between;
+			margin: 5% 0;
+		}
+		.calc-button {
+			backdrop-filter: blur(5.5px);
+			-webkit-backdrop-filter: blur(5.5px);
+			background: rgba(255, 255, 255, 0.75);
+			border: 0.1rem solid rgba(255, 255, 255, 0.01);
+			border-radius: 16px;
+			box-shadow: 0 4px 30px rgba(35, 35, 35, 0.1);
+			color: #232323;
+			flex-basis: 20%;
+			font-family: inherit;
+			font-size: 1.5rem;
+			height: 4.3rem;
+		}
+		.calc-button:last-child {
+			color: #ffffff;
+			background: #e68405;
+		}
+		.calc-button:hover {
+			background-color: inherit;
+		}
+		.calc-button:last-child:hover {
+			background-color: inherit;
+			color: inherit;
+		}
+		.calc-button:last-child:active {
+			background-color: #ffef78;
+			color: inherit;
+		}
+		.calc-button:active {
+			background-color: #ffef78;
+		}
+		.double {
+			flex-basis: 14rem;
+		}
+		.triple {
+			flex-basis: 20rem;
+		}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+		<section class="screen">
+			0
+		</section>
+		<section class="calc-buttons">
+			<div class="calc-button-row">
+				<button class="calc-button double">
+					C
+				</button>
+				<button class="calc-button">
+					&larr;
+				</button>
+				<button class="calc-button">
+					&divide;
+				</button>
+			</div>
+			<div class="calc-button-row">
+				<button class="calc-button">
+					7
+				</button>
+				<button class="calc-button">
+					8
+				</button>
+				<button class="calc-button">
+					9
+				</button>
+				<button class="calc-button">
+					&times;
+				</button>
+			</div>
+			<div class="calc-button-row">
+				<button class="calc-button">
+					4
+				</button>
+				<button class="calc-button">
+					5
+				</button>
+				<button class="calc-button">
+					6
+				</button>
+				<button class="calc-button">
+					&minus;
+				</button>
+			</div>
+			<div class="calc-button-row">
+				<button class="calc-button">
+					1
+				</button>
+				<button class="calc-button">
+					2
+				</button>
+				<button class="calc-button">
+					3
+				</button>
+				<button class="calc-button">
+					&plus;
+				</button>
+			</div>
+			<div class="calc-button-row">
+				<button class="calc-button double">
+					0
+				</button>
+				<button class="calc-button">
+					.
+				</button>
+				<button class="calc-button">
+					&equals;
+				</button>
+			</div>
+		</section>
+	</div>
+
+	<script>
+		let runningTotal = 0;
+		let buffer = "0";
+		let previousOperator = null;
+		let isQuack = false;
+
+		const screen = document.querySelector('.screen');
+
+		function buttonClick(value){
+			if(isNaN(value)){
+				handleSymbol(value);
+			}else{
+				handleNumber(value);
+			}
+			screen.innerText = buffer;
+		}
+
+		function showQuack(){
+			buffer = 'Quack!';
+			runningTotal = 0;
+			previousOperator = null;
+			isQuack = false;
+		}
+
+		function handleSymbol(symbol){
+			if(buffer === 'Quack!' && symbol !== 'C'){
+				return;
+			}
+			switch(symbol){
+				case 'C':
+					buffer = '0';
+					runningTotal = 0;
+					previousOperator = null;
+					break;
+				case '=':
+					if(previousOperator === null){
+						return
+					}
+					flushOperation(parseFloat(buffer));
+					if(isQuack){
+						showQuack();
+						break;
+					}
+					previousOperator = null;
+					buffer = parseFloat(runningTotal.toFixed(10)).toString();
+					runningTotal = 0;
+					break;
+				case '←':
+					if(buffer.length ===1){
+						buffer = '0';
+					}else{
+						buffer = buffer.substring(0, buffer.length - 1);
+					}
+					break;
+				case '.':
+					if(!buffer.includes('.')){
+						buffer += '.';
+					}
+					break;
+				case '+':
+				case '−':
+				case '×':
+				case '÷':
+					handleMath(symbol);
+					break;
+			}
+		}
+
+		function handleMath(symbol){
+			if(buffer === '0'){
+				return;
+			}
+			const floatBuffer = parseFloat(buffer);
+
+			if(runningTotal === 0){
+				runningTotal = floatBuffer;
+			}else{
+				flushOperation(floatBuffer);
+				if(isQuack){
+					showQuack();
+					return;
+				}
+			}
+			previousOperator = symbol;
+			buffer = '0';
+		}
+
+		function flushOperation(floatBuffer){
+			if(previousOperator === '+'){
+				runningTotal += floatBuffer;
+			}else if(previousOperator === '−'){
+				runningTotal -= floatBuffer;
+			}else if(previousOperator === '×'){
+				runningTotal *= floatBuffer;
+			}else if(previousOperator === '÷'){
+				if(floatBuffer === 0){
+					isQuack = true;
+					return;
+				}
+				runningTotal /= floatBuffer;
+			}
+		}
+
+		function handleNumber(numberString){
+			if(buffer === "0" || buffer === 'Quack!'){
+				buffer = numberString;
+			}else{
+				buffer += numberString;
+			}
+		}
+
+		function keyboardInput(event){
+			const key = event.key;
+
+			if(/^[0-9]$/.test(key)){
+				buttonClick(key);
+				return;
+			}
+
+			switch(key){
+				case '+':
+					buttonClick('+');
+					break;
+
+				case '-':
+					buttonClick('−');
+					break;
+
+				case '*':
+					buttonClick('×');
+					break;
+
+				case '/':
+					event.preventDefault();
+					buttonClick('÷');
+					break;
+
+				case '.':
+				case ',':
+					buttonClick('.');
+					break;
+
+				case 'Enter':
+				case '=':
+					event.preventDefault();
+					buttonClick('=');
+					break;
+
+				case 'Backspace':
+					buttonClick('←');
+					break;
+
+				case 'Escape':
+					buttonClick('C');
+					break;
+			}
+		}
+
+		function init(){
+			document.querySelector('.calc-buttons').addEventListener('click', function(event){
+				if(event.target.tagName === 'BUTTON'){
+					buttonClick(event.target.innerText.trim());
+				}
+			});
+
+			document.addEventListener('keydown', keyboardInput);
+		}
+
+		init();
+	</script>
+</body>
+</html>
