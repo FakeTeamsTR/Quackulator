@@ -206,6 +206,9 @@
 					if(previousOperator === null){
 						return
 					}
+					if(buffer === '-'){
+						return;
+					}
 					flushOperation(parseFloat(buffer));
 					if(isQuack){
 						showQuack();
@@ -216,14 +219,16 @@
 					runningTotal = 0;
 					break;
 				case '←':
-					if(buffer.length ===1){
+					if(buffer.length === 1 || (buffer.length === 2 && buffer[0] === '-')){
 						buffer = '0';
 					}else{
 						buffer = buffer.substring(0, buffer.length - 1);
 					}
 					break;
 				case '.':
-					if(!buffer.includes('.')){
+					if(buffer === '-'){
+						buffer = '-0.';
+					}else if(!buffer.includes('.')){
 						buffer += '.';
 					}
 					break;
@@ -237,7 +242,13 @@
 		}
 
 		function handleMath(symbol){
+			if(buffer === '-'){
+				return;
+			}
 			if(buffer === '0'){
+				if(symbol === '−'){
+					buffer = '-';
+				}
 				return;
 			}
 			const floatBuffer = parseFloat(buffer);
@@ -274,6 +285,8 @@
 		function handleNumber(numberString){
 			if(buffer === "0" || buffer === 'Quack!'){
 				buffer = numberString;
+			}else if(buffer === "-0"){
+				buffer = '-' + numberString;
 			}else{
 				buffer += numberString;
 			}
